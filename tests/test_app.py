@@ -10,7 +10,8 @@ from pathlib import Path
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from app import app, activities
+from app import app
+import app as app_module
 
 
 @pytest.fixture
@@ -22,9 +23,12 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_activities():
     """Reset activities data before each test"""
-    global activities
-    activities.clear()
-    activities.update({
+    # Store the original activities to restore after test
+    original_activities = app_module.activities.copy()
+    
+    # Reset to test data by directly modifying the module's dictionary
+    app_module.activities.clear()
+    app_module.activities.update({
         "Chess Club": {
             "description": "Learn strategies and compete in chess tournaments",
             "schedule": "Fridays, 3:30 PM - 5:00 PM",
@@ -44,6 +48,12 @@ def reset_activities():
             "participants": ["john@mergington.edu", "olivia@mergington.edu"]
         }
     })
+    
+    yield
+    
+    # Restore original activities after test (cleanup)
+    app_module.activities.clear()
+    app_module.activities.update(original_activities)
 
 
 class TestRootEndpoint:
